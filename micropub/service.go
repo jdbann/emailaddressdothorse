@@ -3,6 +3,7 @@
 package micropub
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 
@@ -14,6 +15,7 @@ import (
 //encore:service
 type Service struct {
 	FrontendBaseURL *url.URL
+	Entries         []Entry
 }
 
 func initService() (*Service, error) {
@@ -37,6 +39,15 @@ func (s *Service) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	switch r.Header.Get("Content-Type") {
+	case "application/x-www-form-urlencoded":
+		s.handleForm(w, r)
+	case "application/json":
+		s.handleJSON(w, r)
+	}
+}
+
+func (s *Service) handleForm(w http.ResponseWriter, r *http.Request) {
 	if h := r.FormValue("h"); h != "entry" {
 		rlog.Debug("unsupported h type", "h", h)
 		unimplemented.ServeHTTP(w, r)
@@ -50,28 +61,39 @@ func (s *Service) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Save the entry.
-	rlog.Debug("create entry", "entry", entryFromFormValues(r.PostForm))
+	e := entryFromFormValues(r.PostForm)
+	s.Entries = append(s.Entries, e)
 
 	w.Header().Add("location", s.FrontendBaseURL.JoinPath("/entry/123").String())
 	w.WriteHeader(http.StatusCreated)
 }
 
-type entry struct {
-	Content    string
-	Categories []string
-	Photo      string
+type createRequest struct {
+	Type       []string `json:"type"`
+	Properties struct {
+		Content []string `json:"content"`
+	} `json:"properties"`
 }
 
-func entryFromFormValues(form url.Values) *entry {
-	categories := form["category[]"]
-
-	if category, ok := form["category"]; ok {
-		categories = append(categories, category...)
+func (s *Service) handleJSON(w http.ResponseWriter, r *http.Request) {
+	cr := &createRequest{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(cr); err != nil {
+		rlog.Error("malformed body", "error", err)
+		invalidRequest.ServeHTTP(w, r)
+		return
 	}
 
-	return &entry{
-		Content:    form.Get("content"),
-		Categories: categories,
-		Photo:      form.Get("photo"),
+	if h := cr.Type[0]; h != "h-entry" {
+		rlog.Debug("unsupported h type", "h", h)
+		unimplemented.ServeHTTP(w, r)
+		return
 	}
+
+	// TODO: Save the entry.
+	e := entryFromJSONValues(cr)
+	s.Entries = append(s.Entries, e)
+
+	w.Header().Add("location", s.FrontendBaseURL.JoinPath("/entry/123").String())
+	w.WriteHeader(http.StatusCreated)
 }

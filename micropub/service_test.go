@@ -13,14 +13,15 @@ import (
 
 func TestHandle(t *testing.T) {
 	type testCase struct {
-		name       string
-		baseURL    string
-		method     string
-		body       string
-		header     http.Header
-		wantCode   int
-		wantHeader http.Header
-		wantBody   string
+		name        string
+		baseURL     string
+		method      string
+		body        string
+		header      http.Header
+		wantCode    int
+		wantHeader  http.Header
+		wantBody    string
+		wantEntries []micropub.Entry
 	}
 
 	run := func(t *testing.T, tc testCase) {
@@ -46,6 +47,7 @@ func TestHandle(t *testing.T) {
 		assert.Equal(t, tc.wantCode, response.Code)
 		assert.DeepEqual(t, tc.wantHeader, response.HeaderMap)
 		assert.Equal(t, tc.wantBody, response.Body.String())
+		assert.DeepEqual(t, tc.wantEntries, svc.Entries)
 	}
 
 	testCases := []testCase{
@@ -62,6 +64,9 @@ func TestHandle(t *testing.T) {
 				"Location": []string{"https://blog.example.com/entry/123"},
 			},
 			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content: "Micropub test of creating a basic h-entry",
+			}},
 		},
 		{
 			name:    "create an h-entry post with multiple categories (form-encoded)",
@@ -76,6 +81,10 @@ func TestHandle(t *testing.T) {
 				"Location": []string{"https://blog.example.com/entry/123"},
 			},
 			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content:    "Micropub test of creating an h-entry with categories. This post should have two categories, test1 and test2",
+				Categories: []string{"test1", "test2"},
+			}},
 		},
 		{
 			name:    "create an h-entry with a photo referenced by URL (form-encoded)",
@@ -90,6 +99,10 @@ func TestHandle(t *testing.T) {
 				"Location": []string{"https://blog.example.com/entry/123"},
 			},
 			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content: "Micropub test of creating a photo referenced by URL",
+				Photo:   "https://micropub.rocks/media/sunset.jpg",
+			}},
 		},
 		{
 			name:    "create an h-entry post with one category (form-encoded)",
@@ -104,6 +117,27 @@ func TestHandle(t *testing.T) {
 				"Location": []string{"https://blog.example.com/entry/123"},
 			},
 			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content:    "Micropub test of creating an h-entry with one category. This post should have one category, test1",
+				Categories: []string{"test1"},
+			}},
+		},
+		{
+			name:    "create an h-entry post (JSON)",
+			baseURL: "https://blog.example.com",
+			method:  http.MethodPost,
+			body:    `{"type": ["h-entry"],"properties": {"content": ["Micropub test of creating an h-entry with a JSON request"]}}`,
+			header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			wantCode: http.StatusCreated,
+			wantHeader: http.Header{
+				"Location": []string{"https://blog.example.com/entry/123"},
+			},
+			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content: "Micropub test of creating an h-entry with a JSON request",
+			}},
 		},
 	}
 
