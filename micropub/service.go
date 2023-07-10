@@ -33,20 +33,27 @@ func initService() (*Service, error) {
 func (s *Service) Handle(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		rlog.Debug("unsupported method")
-		unimplemented(w, r)
+		unimplemented.ServeHTTP(w, r)
 		return
 	}
 
 	if h := r.FormValue("h"); h != "entry" {
 		rlog.Debug("unsupported h type", "h", h)
-		unimplemented(w, r)
+		unimplemented.ServeHTTP(w, r)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		rlog.Error("malformed body", "error", err)
+		invalidRequest.ServeHTTP(w, r)
 		return
 	}
 
 	content := r.FormValue("content")
+	categories := r.PostForm["category[]"]
 
 	// TODO: Save the entry.
-	rlog.Debug("create entry", "content", content)
+	rlog.Debug("create entry", "content", content, "categories", categories)
 
 	w.Header().Add("location", s.FrontendBaseURL.JoinPath("/entry/123").String())
 	w.WriteHeader(http.StatusCreated)
