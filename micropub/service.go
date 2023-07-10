@@ -49,12 +49,23 @@ func (s *Service) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content := r.FormValue("content")
-	categories := r.PostForm["category[]"]
-
 	// TODO: Save the entry.
-	rlog.Debug("create entry", "content", content, "categories", categories)
+	rlog.Debug("create entry", "entry", entryFromFormValues(r.PostForm))
 
 	w.Header().Add("location", s.FrontendBaseURL.JoinPath("/entry/123").String())
 	w.WriteHeader(http.StatusCreated)
+}
+
+type entry struct {
+	Content    string
+	Categories []string
+	Photo      string
+}
+
+func entryFromFormValues(form url.Values) *entry {
+	return &entry{
+		Content:    form.Get("content"),
+		Categories: form["category[]"],
+		Photo:      form.Get("photo"),
+	}
 }

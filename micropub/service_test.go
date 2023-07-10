@@ -77,6 +77,20 @@ func TestHandle(t *testing.T) {
 			},
 			wantBody: "",
 		},
+		{
+			name:    "create an h-entry with a photo referenced by URL (form-encoded)",
+			baseURL: "https://blog.example.com",
+			method:  http.MethodPost,
+			body:    "h=entry&content=Micropub+test+of+creating+a+photo+referenced+by+URL&photo=https%3A%2F%2Fmicropub.rocks%2Fmedia%2Fsunset.jpg",
+			header: http.Header{
+				"Content-Type": []string{"application/x-www-form-urlencoded"},
+			},
+			wantCode: http.StatusCreated,
+			wantHeader: http.Header{
+				"Location": []string{"https://blog.example.com/entry/123"},
+			},
+			wantBody: "",
+		},
 	}
 
 	for _, tc := range testCases {
