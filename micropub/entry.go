@@ -11,9 +11,13 @@ type Entry struct {
 	Content       string
 	ContentHTML   string
 	Categories    []string
-	Photo         string
-	PhotoAltText  string
+	Photo         []Photo
 	NestedObjects map[string]json.RawMessage
+}
+
+type Photo struct {
+	Href string
+	Alt  string
 }
 
 func entryFromFormValues(form url.Values) Entry {
@@ -23,11 +27,16 @@ func entryFromFormValues(form url.Values) Entry {
 		categories = append(categories, category...)
 	}
 
-	return Entry{
+	e := Entry{
 		Content:    form.Get("content"),
 		Categories: categories,
-		Photo:      form.Get("photo"),
 	}
+
+	if photo := form.Get("photo"); photo != "" {
+		e.Photo = []Photo{{Href: photo}}
+	}
+
+	return e
 }
 
 type entryProperties struct {
@@ -132,9 +141,11 @@ func entryFromJSONValues(props entryProperties) Entry {
 		NestedObjects: props.NestedObjects,
 	}
 
-	if len(props.Photos) > 0 {
-		e.Photo = props.Photos[0].Value
-		e.PhotoAltText = props.Photos[0].Alt
+	for _, photo := range props.Photos {
+		e.Photo = append(e.Photo, Photo{
+			Href: photo.Value,
+			Alt:  photo.Alt,
+		})
 	}
 
 	return e

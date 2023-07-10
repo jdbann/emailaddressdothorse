@@ -102,7 +102,9 @@ func TestHandle(t *testing.T) {
 			wantBody: "",
 			wantEntries: []micropub.Entry{{
 				Content: "Micropub test of creating a photo referenced by URL",
-				Photo:   "https://micropub.rocks/media/sunset.jpg",
+				Photo: []micropub.Photo{{
+					Href: "https://micropub.rocks/media/sunset.jpg",
+				}},
 			}},
 		},
 		{
@@ -190,7 +192,9 @@ func TestHandle(t *testing.T) {
 			wantBody: "",
 			wantEntries: []micropub.Entry{{
 				Content: "Micropub test of creating a photo referenced by URL. This post should include a photo of a sunset.",
-				Photo:   "https://micropub.rocks/media/sunset.jpg",
+				Photo: []micropub.Photo{{
+					Href: "https://micropub.rocks/media/sunset.jpg",
+				}},
 			}},
 		},
 		{
@@ -228,9 +232,32 @@ func TestHandle(t *testing.T) {
 			},
 			wantBody: "",
 			wantEntries: []micropub.Entry{{
-				Content:      "Micropub test of creating a photo referenced by URL with alt text. This post should include a photo of a sunset.",
-				Photo:        "https://micropub.rocks/media/sunset.jpg",
-				PhotoAltText: "Photo of a sunset",
+				Content: "Micropub test of creating a photo referenced by URL with alt text. This post should include a photo of a sunset.",
+				Photo: []micropub.Photo{{
+					Href: "https://micropub.rocks/media/sunset.jpg",
+					Alt:  "Photo of a sunset",
+				}},
+			}},
+		},
+		{
+			name:    "create an h-entry with multiple photos referenced by URL (JSON)",
+			baseURL: "https://blog.example.com",
+			method:  http.MethodPost,
+			body:    `{"type":["h-entry"],"properties":{"content":["Micropub test of creating multiple photos referenced by URL. This post should include a photo of a city at night."],"photo":["https://micropub.rocks/media/sunset.jpg","https://micropub.rocks/media/city-at-night.jpg"]}}`,
+			header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			wantCode: http.StatusCreated,
+			wantHeader: http.Header{
+				"Location": []string{"https://blog.example.com/entry/123"},
+			},
+			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content: "Micropub test of creating multiple photos referenced by URL. This post should include a photo of a city at night.",
+				Photo: []micropub.Photo{
+					{Href: "https://micropub.rocks/media/sunset.jpg"},
+					{Href: "https://micropub.rocks/media/city-at-night.jpg"},
+				},
 			}},
 		},
 	}
