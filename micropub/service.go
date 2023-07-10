@@ -63,9 +63,15 @@ type entry struct {
 }
 
 func entryFromFormValues(form url.Values) *entry {
+	categories := form["category[]"]
+
+	if category, ok := form["category"]; ok {
+		categories = append(categories, category...)
+	}
+
 	return &entry{
 		Content:    form.Get("content"),
-		Categories: form["category[]"],
+		Categories: categories,
 		Photo:      form.Get("photo"),
 	}
 }
