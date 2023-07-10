@@ -31,6 +31,7 @@ func entryFromFormValues(form url.Values) Entry {
 type entryProperties struct {
 	Content    []contentProperty `json:"content"`
 	Categories []string          `json:"category"`
+	Photos     []string          `json:"photo"`
 }
 
 type contentProperty struct {
@@ -61,9 +62,15 @@ func (c *contentProperty) UnmarshalJSON(b []byte) error {
 }
 
 func entryFromJSONValues(props entryProperties) Entry {
-	return Entry{
+	e := Entry{
 		Content:     props.Content[0].Plain,
 		ContentHTML: props.Content[0].HTML,
 		Categories:  props.Categories,
 	}
+
+	if len(props.Photos) > 0 {
+		e.Photo = props.Photos[0]
+	}
+
+	return e
 }
