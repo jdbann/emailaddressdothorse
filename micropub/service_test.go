@@ -214,6 +214,25 @@ func TestHandle(t *testing.T) {
 				},
 			}},
 		},
+		{
+			name:    "create an h-entry post with a photo with alt text (JSON)",
+			baseURL: "https://blog.example.com",
+			method:  http.MethodPost,
+			body:    `{"type":["h-entry"],"properties":{"content":["Micropub test of creating a photo referenced by URL with alt text. This post should include a photo of a sunset."],"photo":[{"value":"https://micropub.rocks/media/sunset.jpg","alt":"Photo of a sunset"}]}}`,
+			header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			wantCode: http.StatusCreated,
+			wantHeader: http.Header{
+				"Location": []string{"https://blog.example.com/entry/123"},
+			},
+			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content:      "Micropub test of creating a photo referenced by URL with alt text. This post should include a photo of a sunset.",
+				Photo:        "https://micropub.rocks/media/sunset.jpg",
+				PhotoAltText: "Photo of a sunset",
+			}},
+		},
 	}
 
 	for _, tc := range testCases {

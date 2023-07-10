@@ -12,6 +12,7 @@ type Entry struct {
 	ContentHTML   string
 	Categories    []string
 	Photo         string
+	PhotoAltText  string
 	NestedObjects map[string]json.RawMessage
 }
 
@@ -32,7 +33,7 @@ func entryFromFormValues(form url.Values) Entry {
 type entryProperties struct {
 	Content       []contentProperty
 	Categories    []string
-	Photos        []string
+	Photos        []photoProperty
 	NestedObjects map[string]json.RawMessage
 }
 
@@ -94,6 +95,35 @@ func (c *contentProperty) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type photoProperty struct {
+	Value string
+	Alt   string
+}
+
+type photoObjectProperty struct {
+	Value string `json:"value"`
+	Alt   string `json:"alt"`
+}
+
+func (p *photoProperty) UnmarshalJSON(b []byte) error {
+	if bytes.HasPrefix(b, []byte("{")) {
+		prop := &photoObjectProperty{}
+		if err := json.Unmarshal(b, prop); err != nil {
+			return err
+		}
+		p.Value = prop.Value
+		p.Alt = prop.Alt
+	} else {
+		var prop string
+		if err := json.Unmarshal(b, &prop); err != nil {
+			return err
+		}
+		p.Value = prop
+	}
+
+	return nil
+}
+
 func entryFromJSONValues(props entryProperties) Entry {
 	e := Entry{
 		Content:       props.Content[0].Plain,
@@ -103,7 +133,8 @@ func entryFromJSONValues(props entryProperties) Entry {
 	}
 
 	if len(props.Photos) > 0 {
-		e.Photo = props.Photos[0]
+		e.Photo = props.Photos[0].Value
+		e.PhotoAltText = props.Photos[0].Alt
 	}
 
 	return e
