@@ -1,6 +1,7 @@
 package micropub_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -190,6 +191,27 @@ func TestHandle(t *testing.T) {
 			wantEntries: []micropub.Entry{{
 				Content: "Micropub test of creating a photo referenced by URL. This post should include a photo of a sunset.",
 				Photo:   "https://micropub.rocks/media/sunset.jpg",
+			}},
+		},
+		{
+			name:    "create an h-entry post with a nested object (JSON)",
+			baseURL: "https://blog.example.com",
+			method:  http.MethodPost,
+			body:    `{"type":["h-entry"],"properties":{"published":["2017-05-31T12:03:36-07:00"],"content":["Lunch meeting"],"checkin":[{"type":["h-card"],"properties":{"name":["Los Gorditos"],"url":["https://foursquare.com/v/502c4bbde4b06e61e06d1ebf"],"latitude":[45.524330801154],"longitude":[-122.68068808051],"street-address":["922 NW Davis St"],"locality":["Portland"],"region":["OR"],"country-name":["United States"],"postal-code":["97209"]}}]}}`,
+			header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			wantCode: http.StatusCreated,
+			wantHeader: http.Header{
+				"Location": []string{"https://blog.example.com/entry/123"},
+			},
+			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content: "Lunch meeting",
+				NestedObjects: map[string]json.RawMessage{
+					"checkin":   json.RawMessage(`[{"type":["h-card"],"properties":{"name":["Los Gorditos"],"url":["https://foursquare.com/v/502c4bbde4b06e61e06d1ebf"],"latitude":[45.524330801154],"longitude":[-122.68068808051],"street-address":["922 NW Davis St"],"locality":["Portland"],"region":["OR"],"country-name":["United States"],"postal-code":["97209"]}}]`),
+					"published": json.RawMessage(`["2017-05-31T12:03:36-07:00"]`),
+				},
 			}},
 		},
 	}

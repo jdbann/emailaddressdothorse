@@ -8,10 +8,11 @@ import (
 
 // Entry is the representation of a post in micropub's schema.
 type Entry struct {
-	Content     string
-	ContentHTML string
-	Categories  []string
-	Photo       string
+	Content       string
+	ContentHTML   string
+	Categories    []string
+	Photo         string
+	NestedObjects map[string]json.RawMessage
 }
 
 func entryFromFormValues(form url.Values) Entry {
@@ -29,9 +30,41 @@ func entryFromFormValues(form url.Values) Entry {
 }
 
 type entryProperties struct {
-	Content    []contentProperty `json:"content"`
-	Categories []string          `json:"category"`
-	Photos     []string          `json:"photo"`
+	Content       []contentProperty
+	Categories    []string
+	Photos        []string
+	NestedObjects map[string]json.RawMessage
+}
+
+func (p *entryProperties) UnmarshalJSON(b []byte) error {
+	all := map[string]json.RawMessage{}
+	if err := json.Unmarshal(b, &all); err != nil {
+		return err
+	}
+
+	for k, v := range all {
+		switch k {
+		case "content":
+			if err := json.Unmarshal(v, &p.Content); err != nil {
+				return err
+			}
+		case "category":
+			if err := json.Unmarshal(v, &p.Categories); err != nil {
+				return err
+			}
+		case "photo":
+			if err := json.Unmarshal(v, &p.Photos); err != nil {
+				return err
+			}
+		default:
+			if p.NestedObjects == nil {
+				p.NestedObjects = make(map[string]json.RawMessage)
+			}
+			p.NestedObjects[k] = v
+		}
+	}
+
+	return nil
 }
 
 type contentProperty struct {
@@ -63,9 +96,10 @@ func (c *contentProperty) UnmarshalJSON(b []byte) error {
 
 func entryFromJSONValues(props entryProperties) Entry {
 	e := Entry{
-		Content:     props.Content[0].Plain,
-		ContentHTML: props.Content[0].HTML,
-		Categories:  props.Categories,
+		Content:       props.Content[0].Plain,
+		ContentHTML:   props.Content[0].HTML,
+		Categories:    props.Categories,
+		NestedObjects: props.NestedObjects,
 	}
 
 	if len(props.Photos) > 0 {
