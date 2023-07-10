@@ -126,7 +126,7 @@ func TestHandle(t *testing.T) {
 			name:    "create an h-entry post (JSON)",
 			baseURL: "https://blog.example.com",
 			method:  http.MethodPost,
-			body:    `{"type": ["h-entry"],"properties": {"content": ["Micropub test of creating an h-entry with a JSON request"]}}`,
+			body:    `{"type":["h-entry"],"properties":{"content":["Micropub test of creating an h-entry with a JSON request"]}}`,
 			header: http.Header{
 				"Content-Type": []string{"application/json"},
 			},
@@ -137,6 +137,24 @@ func TestHandle(t *testing.T) {
 			wantBody: "",
 			wantEntries: []micropub.Entry{{
 				Content: "Micropub test of creating an h-entry with a JSON request",
+			}},
+		},
+		{
+			name:    "create an h-entry post with multiple categories (JSON)",
+			baseURL: "https://blog.example.com",
+			method:  http.MethodPost,
+			body:    `{"type":["h-entry"],"properties":{"content":["Micropub test of creating an h-entry with a JSON request containing multiple categories. This post should have two categories, test1 and test2."],"category":["test1","test2"]}}`,
+			header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			wantCode: http.StatusCreated,
+			wantHeader: http.Header{
+				"Location": []string{"https://blog.example.com/entry/123"},
+			},
+			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				Content:    "Micropub test of creating an h-entry with a JSON request containing multiple categories. This post should have two categories, test1 and test2.",
+				Categories: []string{"test1", "test2"},
 			}},
 		},
 	}

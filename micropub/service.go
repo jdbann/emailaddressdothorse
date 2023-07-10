@@ -71,7 +71,8 @@ func (s *Service) handleForm(w http.ResponseWriter, r *http.Request) {
 type createRequest struct {
 	Type       []string `json:"type"`
 	Properties struct {
-		Content []string `json:"content"`
+		Content    []string `json:"content"`
+		Categories []string `json:"category"`
 	} `json:"properties"`
 }
 

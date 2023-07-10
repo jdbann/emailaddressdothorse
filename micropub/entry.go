@@ -25,6 +25,7 @@ func entryFromFormValues(form url.Values) Entry {
 
 func entryFromJSONValues(val *createRequest) Entry {
 	return Entry{
-		Content: val.Properties.Content[0],
+		Content:    val.Properties.Content[0],
+		Categories: val.Properties.Categories,
 	}
 }
