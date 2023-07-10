@@ -157,6 +157,23 @@ func TestHandle(t *testing.T) {
 				Categories: []string{"test1", "test2"},
 			}},
 		},
+		{
+			name:    "create an h-entry with HTML content (JSON)",
+			baseURL: "https://blog.example.com",
+			method:  http.MethodPost,
+			body:    `{"type":["h-entry"],"properties":{"content":[{"html":"<p>This post has <b>bold</b> and <i>italic</i> text.</p>"}]}}`,
+			header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			wantCode: http.StatusCreated,
+			wantHeader: http.Header{
+				"Location": []string{"https://blog.example.com/entry/123"},
+			},
+			wantBody: "",
+			wantEntries: []micropub.Entry{{
+				ContentHTML: "<p>This post has <b>bold</b> and <i>italic</i> text.</p>",
+			}},
+		},
 	}
 
 	for _, tc := range testCases {

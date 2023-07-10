@@ -69,11 +69,8 @@ func (s *Service) handleForm(w http.ResponseWriter, r *http.Request) {
 }
 
 type createRequest struct {
-	Type       []string `json:"type"`
-	Properties struct {
-		Content    []string `json:"content"`
-		Categories []string `json:"category"`
-	} `json:"properties"`
+	Type       []string        `json:"type"`
+	Properties entryProperties `json:"properties"`
 }
 
 func (s *Service) handleJSON(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +89,7 @@ func (s *Service) handleJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Save the entry.
-	e := entryFromJSONValues(cr)
+	e := entryFromJSONValues(cr.Properties)
 	s.Entries = append(s.Entries, e)
 
 	w.Header().Add("location", s.FrontendBaseURL.JoinPath("/entry/123").String())
